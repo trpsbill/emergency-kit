@@ -271,7 +271,8 @@ def describe_doc(name, head):
 
 def cmd_index():
     files = sorted(p for p in DOCS_DIR.iterdir()
-                   if p.suffix.lower() in (".pdf", ".md", ".txt"))
+                   if p.suffix.lower() in (".pdf", ".md", ".txt")
+                   and p.name != "SOURCES.md")
     if not files:
         sys.exit(f"error: no PDF/MD/TXT files in {DOCS_DIR}")
     t0 = time.time()

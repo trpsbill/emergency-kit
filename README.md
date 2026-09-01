@@ -61,8 +61,19 @@ Python with numpy; HTTP is stdlib urllib.
    https://download.kiwix.org/release/kiwix-tools/ and extract into `./kiwix/`
    (start.sh expects `./kiwix/kiwix-tools_linux-x86_64-<ver>/kiwix-serve`;
    override with `KIWIX_BIN` in `.env`).
-4. ZIM archives into `./kiwix/zims/` (see table below) and reference documents
-   into `./docs/` (see `docs/SOURCES.md`).
+4. Download the reference library:
+   ```bash
+   ./setup.sh          # interactive checklist (SPACE toggles, ENTER confirms)
+   ./setup.sh --all    # non-interactive, fetch everything
+   ```
+   Presents every source — 17 documents (survival/SERE manuals, small-unit
+   tactics, fieldworks, cold weather, hygiene, civil disturbance, nuclear
+   fallout, first aid, water disinfection, canning, gardening, trapping,
+   woodcraft/shelter-building classics) plus the two ZIM archives — all
+   selected by default; uncheck what you don't want. Already-present files
+   are skipped, Gutenberg boilerplate is stripped, and the EPA page is
+   converted to plain text automatically. Provenance and licenses:
+   `docs/SOURCES.md`.
 5. Machine-specific config: `cp .env.example .env` and edit if anything is not
    on localhost (e.g. under WSL2 with LM Studio on the Windows host, add the
    gateway IP to `LMSTUDIO_EXTRA_URLS`). Update `KIWIX_BOOKS` in kit.py if

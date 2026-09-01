@@ -5,8 +5,10 @@ kiwix/
 index.npz
 *.npz
 
-# reference documents are downloaded, not committed (see docs/SOURCES.md)
-docs/*.pdf
+# reference documents are downloaded via setup.sh, not committed
+# (see docs/SOURCES.md); only SOURCES.md itself is tracked
+docs/*
+!docs/SOURCES.md
 
 # machine-specific config
 .env
