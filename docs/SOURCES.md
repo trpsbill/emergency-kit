@@ -17,6 +17,9 @@ markers) after download.
 | `fm7-8-infantry-platoon-squad.txt` | FM 7-8, Infantry Rifle Platoon and Squad (1992 — small-unit tactics, patrolling, defense) | https://archive.org/download/fm-7-8-infantry-rifle-platoon-and-sqaud-1992/FM%207-8%20Infantry%20Rifle%20Platoon%20And%20Sqaud%20%201992_djvu.txt |
 | `fm5-103-survivability-fieldworks.txt` | FM 5-103, Survivability (1985 — fighting/protective positions, field fortification) | https://archive.org/download/fm-5-103-survivability-1985/FM%205-103%20Survivability%20%201985_djvu.txt |
 | `fm31-70-cold-weather.txt` | FM 31-70, Basic Cold Weather Manual (1968 — clothing, shelters, cold injuries) | https://archive.org/download/fm-31-70-basic-cold-weather-manual-1968/FM%2031-70%20Basic%20Cold%20Weather%20Manual%20%201968_djvu.txt |
+| `fm21-77-evasion-and-escape.txt` | FM 21-77, Evasion and Escape (1958 — evasion movement, contact, escape) | https://archive.org/download/fm-21-77-evasion-and-escape-1958/FM%2021-77%20Evasion%20And%20Escape%20%201958_djvu.txt |
+| `fm21-78-prisoner-of-war-resistance.txt` | FM 21-78, Prisoner of War Resistance (1981 — resistance to interrogation and exploitation, Code of Conduct, escape) | https://archive.org/download/fm-21-78-prisoner-of-war-resistance-1981/FM%2021-78%20Prisoner%20Of%20War%20Resistance%20%201981_djvu.txt |
+| `afr64-4-sere-survival-training.txt` | AFR 64-4, Search and Rescue Survival Training (1985 — the full USAF SERE school text; via DTIC public release) | https://archive.org/download/DTIC_ADA325861/DTIC_ADA325861_djvu.txt |
 
 Note: FM 3-05.70 (the 2002 successor to FM 21-76) was deliberately excluded —
 it carries a restricted-distribution marking; FM 21-76 covers the same ground
@@ -39,6 +42,19 @@ and is unrestricted.
 | `usda-complete-guide-home-canning.txt` | USDA Complete Guide to Home Canning (2015 revision, AIB 539) | Public domain (US gov) | https://archive.org/download/usda-complete-guide-to-home-canning-2015-revision/USDA-Complete-Guide-to-Home-Canning-2015-revision_djvu.txt |
 | `vegetable-gardening-watts.txt` | R. L. Watts, Vegetable Gardening (1912) | Public domain (pre-1929) | https://archive.org/download/vegetablegardeni00wattrich/vegetablegardeni00wattrich_djvu.txt |
 | `camp-life-woods-tricks-of-trapping.txt` | W. H. Gibson, Camp Life in the Woods and the Tricks of Trapping (1881) | Public domain (pre-1929) | https://archive.org/download/william-hamilton-gibson-camp-life-in-the-woods-the-tricks-of-trapping/William_Hamilton_Gibson_Camp_Life_in_the_Woods_%26_the_Tricks_of_Trapping_djvu.txt |
+
+## Homesteading and self-sufficiency crafts
+
+| Save as | Document | License | Download |
+|---|---|---|---|
+| `usda-meat-on-the-farm.txt` | USDA Farmers' Bulletin 183, Meat on the Farm: Butchering, Curing, and Keeping (1906) | Public domain (US gov) | https://archive.org/download/CAT10416773/farmbul0183rev1906_djvu.txt |
+| `usda-home-tanning-leather.txt` | USDA Farmers' Bulletin 1334, Home Tanning of Leather and Small Fur Skins (1947) | Public domain (US gov) | https://archive.org/download/CAT87206840/farmbul1334rev1947_djvu.txt |
+| `usda-farm-poultry-raising.txt` | USDA Farmers' Bulletin 1524, Farm Poultry Raising (1948) | Public domain (US gov) | https://archive.org/download/CAT87204532/farmbul1524rev1948_djvu.txt |
+| `american-boys-handy-book-beard.txt` | D. C. Beard, The American Boy's Handy Book (1882) | Public domain (pre-1929) | https://archive.org/download/whattodohowtodoi00bear/whattodohowtodoi00bear_djvu.txt |
+| `standard-blacksmithing-holmstrom.txt` | J. G. Holmstrom, Standard Blacksmithing, Horseshoeing and Wagon Making (1907) | Public domain (pre-1929) | https://archive.org/download/standardblacksmi00holm/standardblacksmi00holm_djvu.txt |
+| `war-gardening-home-storage-vegetables.txt` | National War Garden Commission, War Gardening and Home Storage of Vegetables (1918) | Public domain (pre-1929) | https://archive.org/download/wargardeninghome00vict/wargardeninghome00vict_djvu.txt |
+| `art-of-soap-making-watt.txt` | A. Watt, The Art of Soap-Making (1896) | Public domain (pre-1929) | https://archive.org/download/artsoapmakingap00wattgoog/artsoapmakingap00wattgoog_djvu.txt |
+| `abc-of-bee-culture-root.txt` | A. I. Root, ABC of Bee Culture (1890) | Public domain (pre-1929) | https://archive.org/download/CAT11016093/CAT11016093_djvu.txt |
 
 ## Woodcraft, camping, primitive building
 
