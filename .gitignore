@@ -18,6 +18,11 @@ __pycache__/
 .venv/
 venv/
 
+# offline map extracts, pmtiles CLI, and vendored map viewer libraries
+# (all downloaded via setup.sh)
+maps/
+static/vendor/
+
 # runtime state and logs
 run/
 *.log

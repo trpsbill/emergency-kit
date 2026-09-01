@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Offline Map — Emergency Knowledge Kit</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<link rel="stylesheet" href="/static/vendor/maplibre-gl.css">
+<style>
+  body { margin: 0; background: #12161c; }
+  #map { position: fixed; inset: 0; }
+  #topbar { position: fixed; top: 10px; left: 10px; z-index: 5;
+    display: flex; gap: 8px; align-items: center;
+    font: 14px system-ui, sans-serif; }
+  #topbar a, #topbar select { color: #e6e9ee; background: #1b222cdd;
+    border: 1px solid #2e3947; border-radius: 8px; padding: 6px 12px;
+    text-decoration: none; font: inherit; }
+  #err { position: fixed; top: 40%; width: 100%; text-align: center;
+    color: #e6e9ee; font: 15px system-ui, sans-serif; display: none;
+    white-space: pre-line; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="topbar">
+  <a href="/">← back to kit</a>
+  <select id="region" style="display:none"></select>
+</div>
+<div id="err"></div>
+<script src="/static/vendor/maplibre-gl.js"></script>
+<script src="/static/vendor/pmtiles.js"></script>
+<script src="/static/vendor/basemaps.js"></script>
+<script>
+const protocol = new pmtiles.Protocol();
+maplibregl.addProtocol('pmtiles', protocol.tile);
+let map = null;
+
+function fail(msg) {
+  const el = document.getElementById('err');
+  el.style.display = 'block';
+  el.textContent = msg;
+}
+
+function show(url, type) {
+  const style = type === 'raster' ? {
+    version: 8,
+    sources: {
+      topo: {
+        type: 'raster',
+        url: 'pmtiles://' + location.origin + url,
+        tileSize: 256,
+        attribution: 'USGS The National Map (public domain)',
+      },
+    },
+    layers: [
+      {id: 'bg', type: 'background', paint: {'background-color': '#e9e5dc'}},
+      {id: 'topo', type: 'raster', source: 'topo'},
+    ],
+  } : {
+    version: 8,
+    glyphs: location.origin + '/static/vendor/basemaps-assets/fonts/{fontstack}/{range}.pbf',
+    sprite: location.origin + '/static/vendor/basemaps-assets/sprites/v4/dark',
+    sources: {
+      protomaps: {
+        type: 'vector',
+        url: 'pmtiles://' + location.origin + url,
+        attribution: '<a href="https://openstreetmap.org/copyright">© OpenStreetMap contributors</a> · Protomaps',
+      },
+    },
+    layers: basemaps.layers('protomaps', basemaps.namedFlavor('dark'), {lang: 'en'}),
+  };
+  if (map) { map.setStyle(style); fit(url); return; }
+  map = new maplibregl.Map({container: 'map', style, center: [-98, 39], zoom: 4});
+  map.addControl(new maplibregl.NavigationControl());
+  map.addControl(new maplibregl.ScaleControl({unit: 'imperial'}));
+  map.addControl(new maplibregl.GeolocateControl({trackUserLocation: true}));
+  fit(url);
+}
+
+async function fit(url) {  // zoom to the extract's own bounds
+  try {
+    const p = new pmtiles.PMTiles(location.origin + url);
+    const h = await p.getHeader();
+    map.fitBounds([[h.minLon, h.minLat], [h.maxLon, h.maxLat]], {duration: 0, padding: 20});
+  } catch (e) { /* keep default view */ }
+}
+
+fetch('/api/maps').then(r => r.json()).then(list => {
+  if (!list.length) {
+    fail('No offline maps downloaded yet.\nRun ./setup.sh and select the state(s) you want.');
+    return;
+  }
+  const sel = document.getElementById('region');
+  const byUrl = {};
+  for (const m of list) {
+    byUrl[m.url] = m;
+    const o = document.createElement('option');
+    o.value = m.url;
+    o.textContent = `${m.name} (${m.size_mb} MB)`;
+    sel.appendChild(o);
+  }
+  if (list.length > 1) sel.style.display = 'block';
+  sel.onchange = () => show(sel.value, byUrl[sel.value].type);
+  show(list[0].url, list[0].type);
+}).catch(e => fail('Failed to list maps: ' + e.message));
+</script>
+</body>
+</html>

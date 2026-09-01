@@ -5,6 +5,7 @@ set -u
 cd "$(dirname "$0")"
 mkdir -p run
 [ -f .env ] && . ./.env
+[ "${1:-}" = "--debug" ] && export KIT_DEBUG=1
 
 KIWIX_PORT="${KIWIX_PORT:-8080}"
 APP_PORT="${APP_PORT:-8000}"
