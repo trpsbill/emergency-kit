@@ -84,7 +84,9 @@ EMBED_BATCH = 32
 
 TOP_K_DOCS = 4            # local doc chunks in the prompt
 TOP_K_WIKI = 2            # kiwix articles fetched
+MAX_WIKI_IMAGES = 4       # images surfaced per retrieved article
 DOC_SCORE_FLOOR = 0.65    # drop doc chunks below this cosine similarity
+WIKI_SCORE_FLOOR = 0.66   # same idea for kiwix articles (vs. article excerpt)
 WIKI_EXCERPT_CHARS = 2500 # per-article cap so wiki doesn't drown the prompt
 
 MAX_ANSWER_TOKENS = 3000
@@ -94,12 +96,27 @@ REQUEST_TIMEOUT = 300
 DOC_PREFIX = "search_document: "
 QUERY_PREFIX = "search_query: "
 
-SYSTEM_PROMPT = """You are an offline emergency reference assistant. Prefer the numbered sources provided. Rules:
-- When the sources cover the question, base every statement on them and cite the source title inline after each claim, e.g. (EPA Emergency Disinfection of Drinking Water). Do not mix in facts from your own knowledge.
+SYSTEM_PROMPT = """You are an offline emergency assistant advising a person who may be in a real emergency. You have numbered source excerpts retrieved for their question.
+
+Grounding rules:
+- Base factual claims on the sources and cite the source title inline after each claim, e.g. (EPA Emergency Disinfection of Drinking Water). Do not mix in facts from your own knowledge when sources cover the topic.
 - Quote exact quantities, doses, and durations verbatim from the sources.
-- If the sources do NOT cover the question (or none were retrieved), you may answer from your own general knowledge, but you MUST begin with exactly this line:
-  **No sources cover this — answering from model memory, verify independently.**
-  Then give your best answer. Never cite a source title for a claim that did not come from the sources, and never present a memory-based answer as sourced."""
+- The excerpts come from keyword/similarity search and may include irrelevant ones — silently ignore those. Never cite a source title for a claim that did not come from that source.
+
+You are an advisor, not a search engine:
+- Reason about the person's actual situation. Select and prioritize what applies to the details they gave (location type, terrain, weather, time of day, resources, people with them) instead of dumping everything the sources say. If the situation sounds immediately dangerous, lead with the most time-critical actions.
+- When missing details would materially change your advice, give the most urgent generally-applicable guidance first, then end with a short "To advise you better:" section asking up to three pointed questions (e.g. urban or wilderness? on foot or in a vehicle? how close are they?). Use the answers in later turns to tailor further.
+- In an ongoing conversation, build on what was already established; do not repeat prior advice wholesale."""
+
+# Used instead of the sources block when retrieval returned nothing. The
+# caller (CLI/web) prepends DISCLAIMER to the output — the model is never
+# trusted to emit it, so it can't contradict itself.
+NO_SOURCES_BODY = ("SOURCES: none retrieved — nothing in the offline library "
+                   "matched this question. Answer from your general knowledge, "
+                   "be honest about uncertainty, and do not invent source "
+                   "citations.")
+DISCLAIMER = ("**No sources cover this — answering from model memory, "
+              "verify independently.**\n\n")
 
 MANIFEST_PROMPT = """
 
@@ -146,6 +163,19 @@ def kiwix_base():
     if _kiwix_base is None:
         _kiwix_base = _pick_base(KIWIX_URLS, "/")
     return _kiwix_base
+
+
+def check_llm():
+    """Quick probe that the LLM server is up. Clears the cached base URL and
+    retries discovery once, so an LM Studio restart mid-session recovers."""
+    global _lm_base
+    for _ in range(2):
+        try:
+            _http(lm_base() + "/models", timeout=4)
+            return True
+        except Exception:
+            _lm_base = None
+    return False
 
 
 def embed(texts):
@@ -355,6 +385,23 @@ def extract_keywords(question, max_kw=4):
     return sorted(content[:max_kw], key=lambda w: question.lower().find(w))
 
 
+def extract_images(html, article_url, cap=MAX_WIKI_IMAGES):
+    """Image URLs (server-relative) from a kiwix article, largest-first bias:
+    skips icons/formula SVGs, resolves relative srcs against the article."""
+    imgs, seen = [], set()
+    for m in re.finditer(r'<img[^>]+src="([^"]+)"', html):
+        src = m.group(1)
+        if src.startswith("data:") or src.lower().endswith(".svg"):
+            continue
+        url = urllib.parse.urljoin(article_url, src)
+        if url not in seen:
+            seen.add(url)
+            imgs.append(url)
+        if len(imgs) >= cap:
+            break
+    return imgs
+
+
 def strip_html(html):
     html = re.sub(r"<(script|style)[^>]*>.*?</\1>", " ", html, flags=re.S | re.I)
     html = re.sub(r"<[^>]+>", " ", html)
@@ -405,12 +452,24 @@ def search_kiwix(question, k=TOP_K_WIKI):
             print(f"warning: fetch failed for {c['link']}: {e}", file=sys.stderr)
             continue
         text = strip_html(html)[:WIKI_EXCERPT_CHARS]
-        # relevance floor: the article text must actually contain one of the
-        # search keywords, otherwise it's a stray full-text match
-        if not any(kw in text.lower() for kw in keywords):
-            continue
         results.append({"title": c["title"], "url": c["link"],
-                        "keywords": keywords, "text": text})
+                        "keywords": keywords, "text": text,
+                        "images": extract_images(html, c["link"])})
+    # relevance floor: kiwix full-text search OR-matches common words and
+    # happily returns unrelated articles — score each excerpt against the
+    # question with the same embeddings used for docs and drop weak ones
+    if results:
+        try:
+            vecs = embed([QUERY_PREFIX + question] +
+                         [DOC_PREFIX + r["text"] for r in results])
+            vecs /= np.linalg.norm(vecs, axis=1, keepdims=True)
+            scores = vecs[1:] @ vecs[0]
+            results = [dict(r, score=float(s))
+                       for r, s in zip(results, scores)
+                       if s >= WIKI_SCORE_FLOOR]
+        except Exception as e:
+            print(f"warning: wiki relevance scoring failed ({e})",
+                  file=sys.stderr)
     return results
 
 
@@ -481,18 +540,40 @@ def build_messages(question, doc_hits, wiki_hits, history=None, manifest=None):
     for h in wiki_hits:
         n += 1
         sources.append(f"[Source {n}: Wikipedia - {h['title']}]\n{h['text']}")
-    body = "SOURCES:\n\n" + "\n\n".join(sources) if sources else \
-        "SOURCES: (none retrieved — nothing relevant found)"
+    body = "SOURCES:\n\n" + "\n\n".join(sources) if sources else NO_SOURCES_BODY
     messages = [{"role": "system", "content": system}]
     messages += history or []
     messages.append({"role": "user", "content": body + f"\n\nQUESTION: {question}"})
     return messages
 
 
+def suggest_replies(question, answer, n=4):
+    """Up to n short replies the user might send next (Open WebUI style).
+    Returns [] on any failure — this is a nicety, never worth an error."""
+    prompt = (
+        "A user asked an offline emergency assistant:\n"
+        f"{question}\n\nThe assistant answered:\n{answer[:3000]}\n\n"
+        f"Suggest up to {n} short replies the user might naturally send next "
+        "— direct answers to any clarifying questions the assistant asked "
+        "(one reply per question, picking a plausible concrete answer), or "
+        "useful follow-up questions. Each under 10 words. "
+        "Reply with ONLY a JSON array of strings.")
+    try:
+        text, _ = chat([{"role": "user", "content": prompt}])
+        m = re.search(r"\[.*\]", text, re.S)
+        items = json.loads(m.group(0)) if m else []
+        return [s.strip() for s in items if isinstance(s, str) and s.strip()][:n]
+    except Exception:
+        return []
+
+
 # ----------------------------------------------------------------------------
 # CLI
 # ----------------------------------------------------------------------------
-def cmd_ask(question, verbose=False):
+def cmd_ask(question, verbose=False, stats=False):
+    if not check_llm():
+        sys.exit("error: LLM server not reachable — is LM Studio running "
+                 f"with the server enabled? (tried {', '.join(LMSTUDIO_URLS)})")
     t0 = time.time()
     doc_hits, wiki_hits = retrieve(question)
     t_retrieval = time.time() - t0
@@ -508,16 +589,24 @@ def cmd_ask(question, verbose=False):
         for h in wiki_hits:
             print(f"\n--- wikipedia: {h['title']} ({h['url']}) ---")
             print(h["text"])
+            for img in h.get("images", []):
+                print(f"  [image] {img}")
         print("=" * 70)
 
     t1 = time.time()
     answer, usage = chat(build_messages(question, doc_hits, wiki_hits))
     t_llm = time.time() - t1
 
+    if not doc_hits and not wiki_hits:
+        answer = DISCLAIMER + answer
     print("\nANSWER:\n" + answer)
-    print(f"\n[retrieval {t_retrieval:.1f}s | llm {t_llm:.1f}s | "
-          f"prompt {usage.get('prompt_tokens', '?')} tok | "
-          f"completion {usage.get('completion_tokens', '?')} tok]")
+    line = f"retrieval {t_retrieval:.1f}s | llm {t_llm:.1f}s"
+    if stats:
+        comp = usage.get("completion_tokens")
+        tps = f"{comp / t_llm:.0f}" if comp and t_llm > 0 else "?"
+        line += (f" | prompt {usage.get('prompt_tokens', '?')} tok"
+                 f" | completion {comp or '?'} tok | {tps} tok/s")
+    print(f"\n[{line}]")
 
 
 def main():
@@ -527,12 +616,13 @@ def main():
     elif args and args[0] == "ask":
         rest = args[1:]
         verbose = "-v" in rest
-        rest = [a for a in rest if a != "-v"]
+        stats = "--stats" in rest
+        rest = [a for a in rest if a not in ("-v", "--stats")]
         if not rest:
-            sys.exit("usage: kit.py ask [-v] \"question\"")
-        cmd_ask(" ".join(rest), verbose)
+            sys.exit("usage: kit.py ask [-v] [--stats] \"question\"")
+        cmd_ask(" ".join(rest), verbose, stats)
     else:
-        sys.exit("usage: kit.py index | kit.py ask [-v] \"question\"")
+        sys.exit("usage: kit.py index | kit.py ask [-v] [--stats] \"question\"")
 
 
 if __name__ == "__main__":

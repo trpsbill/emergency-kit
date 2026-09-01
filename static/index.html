@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Emergency Knowledge Kit</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
 <style>
   :root {
     --bg: #12161c; --panel: #1b222c; --panel2: #232c38; --text: #e6e9ee;
@@ -22,6 +23,19 @@
   .msg { margin: 18px 0; }
   .msg .who { font-size: 12px; color: var(--muted); text-transform: uppercase;
               letter-spacing: .06em; margin-bottom: 4px; }
+  .foot { display: flex; justify-content: flex-end; margin-top: 6px; }
+  .copy { display: inline-flex; align-items: center; gap: 6px;
+          background: none; border: 1px solid var(--border);
+          border-radius: 6px; color: var(--muted); font-size: 12px;
+          padding: 3px 9px; cursor: pointer; }
+  .copy svg { width: 14px; height: 14px; stroke: currentColor; fill: none;
+              stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .copy:hover { color: var(--text); border-color: var(--accent); }
+  .sugg { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .sugg button { background: var(--panel2); border: 1px solid var(--border);
+      border-radius: 14px; color: var(--text); font-size: 13px;
+      padding: 5px 14px; cursor: pointer; text-align: left; }
+  .sugg button:hover { border-color: var(--accent); color: var(--accent); }
   .msg.user .body { background: var(--panel2); border-left: 3px solid var(--accent); }
   .msg .body { background: var(--panel); border: 1px solid var(--border);
                border-radius: 8px; padding: 12px 14px;
@@ -50,6 +64,24 @@
   .cites span.item { display: inline-block; background: var(--panel2);
       border: 1px solid var(--border); border-radius: 12px;
       padding: 1px 10px; margin: 2px 4px 2px 0; }
+  .imgs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .imgs a { display: block; }
+  .imgs img { height: 110px; max-width: 220px; object-fit: cover;
+              border: 1px solid var(--border); border-radius: 6px;
+              background: var(--panel2); }
+  .imgs img:hover { border-color: var(--accent); }
+  .thinking { display: inline-flex; align-items: center; gap: 12px;
+              color: var(--muted); }
+  .gears { position: relative; width: 34px; height: 26px; }
+  .gears span { position: absolute; line-height: 1;
+                font-family: "Segoe UI Symbol", system-ui, sans-serif; }
+  .gear-big { left: 0; top: 1px; font-size: 24px; color: var(--accent);
+              animation: spin 2.4s linear infinite; }
+  .gear-small { left: 19px; top: -3px; font-size: 15px; color: var(--muted);
+                animation: spin-rev 1.5s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spin-rev { to { transform: rotate(-360deg); } }
+  .err { color: #e07a6a; }
   .stats { font-size: 12px; color: var(--muted); margin-top: 6px; }
   .ctxbtn { font-size: 12px; color: var(--link); cursor: pointer;
             background: none; border: none; padding: 0; margin-top: 6px; }
@@ -90,7 +122,8 @@
   <header>
     <h1>Emergency Knowledge Kit</h1>
     <span class="sub">offline · answers only from local sources</span>
-    <a id="showSources">Sources</a>
+    <a href="/map">Map</a>
+    <a id="showSources" style="margin-left:14px">Sources</a>
   </header>
   <div id="chat"></div>
 </div>
@@ -213,6 +246,20 @@ function renderCites(m, meta) {
   }
 }
 
+function renderImgs(m, meta) {
+  if (!meta) return;
+  const urls = meta.wiki.flatMap(w => (w.images || []).map(u => ({u, article: w.url, title: w.title})));
+  if (!urls.length) return;
+  const strip = el('div', 'imgs', m);
+  for (const {u, article, title} of urls) {
+    const a = el('a', '', strip);
+    a.href = u; a.target = '_blank'; a.title = title;
+    const img = el('img', '', a);
+    img.src = u; img.loading = 'lazy';
+    img.onerror = () => a.remove();   // drop broken/missing images silently
+  }
+}
+
 function renderCtx(m, meta) {
   if (!meta || (!meta.docs.length && !meta.wiki.length)) return;
   const btn = el('button', 'ctxbtn', m);
@@ -239,9 +286,11 @@ function renderCtx(m, meta) {
 async function ask(question) {
   addMsg('user', question);
   const {m, b} = addMsg('assistant', '');
-  b.textContent = '…';
+  b.innerHTML = '<span class="thinking"><span class="gears">' +
+    '<span class="gear-big">⚙︎</span><span class="gear-small">⚙︎</span>' +
+    '</span>thinking…</span>';
   send.disabled = true;
-  let meta = null, answer = '';
+  let meta = null, answer = '', doneStats = null, suggestions = [];
   try {
     const res = await fetch('/api/ask', {
       method: 'POST',
@@ -271,13 +320,22 @@ async function ask(question) {
           answer += obj.t;
           b.innerHTML = renderMd(answer);
         } else if (ev === 'done') {
-          const st = el('div', 'stats', m);
-          st.textContent = `retrieval ${meta ? meta.retrieval_seconds : '?'}s · ` +
-            `llm ${obj.llm_seconds}s · prompt ${obj.prompt_tokens ?? '?'} tok · ` +
-            `completion ${obj.completion_tokens ?? '?'} tok`;
+          let txt = `retrieval ${meta ? meta.retrieval_seconds : '?'}s · ` +
+                    `llm ${obj.llm_seconds}s`;
+          if (obj.prompt_tokens != null)
+            txt += ` · prompt ${obj.prompt_tokens} tok · ` +
+                   `completion ${obj.completion_tokens ?? '?'} tok · ` +
+                   `${obj.tokens_per_s ?? '?'} tok/s`;
+          doneStats = txt;
+        } else if (ev === 'suggestions') {
+          suggestions = obj.items || [];
         } else if (ev === 'error') {
-          answer += '\n\n`[error: ' + obj.message + ']`';
-          b.innerHTML = renderMd(answer);
+          if (answer) {
+            answer += '\n\n`[error: ' + obj.message + ']`';
+            b.innerHTML = renderMd(answer);
+          } else {
+            b.innerHTML = '<span class="err">⚠ ' + esc(obj.message) + '</span>';
+          }
         }
       }
       m.scrollIntoView({block: 'end'});
@@ -285,8 +343,37 @@ async function ask(question) {
   } catch (e) {
     b.innerHTML = renderMd((answer || '') + '\n\n`[request failed: ' + esc(String(e)) + ']`');
   }
+  if (answer) {
+    const foot = el('div', 'foot', m);
+    const btn = el('button', 'copy', foot);
+    const icon = '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/>' +
+                 '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    btn.innerHTML = icon;
+    btn.title = 'Copy response';
+    btn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(answer);
+      } catch (e) {   // clipboard API can be unavailable over plain http
+        const ta = document.createElement('textarea');
+        ta.value = answer; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      btn.innerHTML = icon + '<span>copied ✓</span>';
+      setTimeout(() => { btn.innerHTML = icon; }, 1500);
+    };
+  }
+  if (doneStats) el('div', 'stats', m).textContent = doneStats;
   renderCites(m, meta);
+  renderImgs(m, meta);
   renderCtx(m, meta);
+  if (suggestions.length) {
+    const row = el('div', 'sugg', m);
+    for (const s of suggestions) {
+      const b2 = el('button', '', row);
+      b2.textContent = s;
+      b2.onclick = () => { row.remove(); ask(s); };
+    }
+  }
   history.push({role: 'user', content: question});
   history.push({role: 'assistant', content: answer});
   while (history.length > MAX_TURNS * 2) history.shift();

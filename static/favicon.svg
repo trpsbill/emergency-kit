@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <g fill="none" stroke="#d8842c" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- left hemisphere outline -->
+    <path d="M31 7 C24 3 15 6 13 13 C6 14 3 22 6 28 C2 33 3 41 8 45 C8 52 14 57 21 56 C24 60 29 61 31 58 Z"/>
+    <!-- right hemisphere outline (mirrored) -->
+    <path d="M33 7 C40 3 49 6 51 13 C58 14 61 22 58 28 C62 33 61 41 56 45 C56 52 50 57 43 56 C40 60 35 61 33 58 Z"/>
+    <!-- cortical folds, left -->
+    <path d="M13 20 C17 18 21 20 22 24"/>
+    <path d="M10 33 C15 31 19 34 19 38"/>
+    <path d="M17 48 C20 44 25 44 27 47"/>
+    <path d="M22 12 C25 14 26 18 24 21"/>
+    <!-- cortical folds, right -->
+    <path d="M51 20 C47 18 43 20 42 24"/>
+    <path d="M54 33 C49 31 45 34 45 38"/>
+    <path d="M47 48 C44 44 39 44 37 47"/>
+    <path d="M42 12 C39 14 38 18 40 21"/>
+  </g>
+</svg>

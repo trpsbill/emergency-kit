@@ -143,6 +143,10 @@ Everything `setup.sh` installs (licenses and exact filenames in
 - [Nessmuk — Woodcraft and Camping](https://www.gutenberg.org/ebooks/34607)
 - [Boy Scouts Handbook, 1st ed. (1911)](https://www.gutenberg.org/ebooks/29558) — firecraft, knots, camping, signaling
 
+**Offline maps** (per-state, via `setup.sh`)
+- [OpenStreetMap street maps](https://protomaps.com/) — vector extracts from the Protomaps daily planet build (ODbL, ~0.5–2 GB per state)
+- [USGS US Topo](https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer) — raster topo tiles from The National Map (public domain, ~2–4 GB per state at the default zoom)
+
 **Offline Wikipedia (ZIM)**
 - [WikiMed Medical Encyclopedia](https://download.kiwix.org/zim/wikipedia/wikipedia_en_medicine_maxi_2026-04.zim) — ~362k medical articles
 - [Wikipedia top-100 articles](https://download.kiwix.org/zim/wikipedia/wikipedia_en_100_2026-08.zim)
@@ -168,7 +172,16 @@ Web UI:
 ./stop.sh
 ```
 
-Open http://localhost:8000. Streamed answers, last-6-turn conversation memory,
+Open http://localhost:8000, and http://localhost:8000/map for offline maps.
+`setup.sh` offers two per-state map downloads (also non-interactive:
+`./setup.sh --maps texas --topo texas`): OpenStreetMap street/trail vector
+maps extracted from the Protomaps daily build, and USGS US Topo raster tiles
+fetched from The National Map (set `TOPO_MAX_ZOOM=15` before running for full
+1:24k contour detail — roughly 16× the size and time of the default 13). The
+map page auto-zooms to each extract and shows a region dropdown when several
+are downloaded.
+
+The chat UI streams answers with last-6-turn conversation memory,
 citation chips (kiwix citations link into the article, document citations show
 file + page), a per-answer "Show retrieved context" toggle, and a Sources
 panel showing every served ZIM and indexed document. `GET /api/sources`
