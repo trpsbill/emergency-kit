@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emergency Knowledge Kit</title>
+<style>
+  :root {
+    --bg: #12161c; --panel: #1b222c; --panel2: #232c38; --text: #e6e9ee;
+    --muted: #93a0b0; --accent: #d8842c; --link: #6db1e8; --border: #2e3947;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.55 system-ui, sans-serif; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 16px 140px; }
+  header { display: flex; align-items: baseline; gap: 14px;
+           padding: 18px 0 10px; border-bottom: 1px solid var(--border); }
+  header h1 { font-size: 18px; margin: 0; }
+  header .sub { color: var(--muted); font-size: 13px; }
+  header a { color: var(--link); margin-left: auto; font-size: 14px;
+             cursor: pointer; text-decoration: none; }
+  .msg { margin: 18px 0; }
+  .msg .who { font-size: 12px; color: var(--muted); text-transform: uppercase;
+              letter-spacing: .06em; margin-bottom: 4px; }
+  .msg.user .body { background: var(--panel2); border-left: 3px solid var(--accent); }
+  .msg .body { background: var(--panel); border: 1px solid var(--border);
+               border-radius: 8px; padding: 12px 14px;
+               overflow-wrap: break-word; }
+  .msg.user .body { white-space: pre-wrap; }
+  /* rendered markdown */
+  .body p { margin: 0 0 10px; } .body p:last-child { margin-bottom: 0; }
+  .body ul, .body ol { margin: 4px 0 10px; padding-left: 24px; }
+  .body li { margin: 3px 0; }
+  .body h1, .body h2, .body h3, .body h4 { margin: 14px 0 6px; line-height: 1.3; }
+  .body h1 { font-size: 17px; } .body h2 { font-size: 16px; }
+  .body h3, .body h4 { font-size: 15px; }
+  .body code { background: var(--panel2); border: 1px solid var(--border);
+               border-radius: 4px; padding: 0 4px; font-size: 13px; }
+  .body pre { background: var(--panel2); border: 1px solid var(--border);
+              border-radius: 6px; padding: 10px 12px; overflow-x: auto; }
+  .body pre code { background: none; border: none; padding: 0; }
+  .body blockquote { margin: 6px 0 10px; padding: 2px 12px;
+                     border-left: 3px solid var(--accent); color: var(--muted); }
+  .body table { border-collapse: collapse; margin: 6px 0 10px; }
+  .body th, .body td { border: 1px solid var(--border); padding: 4px 10px; }
+  .body hr { border: none; border-top: 1px solid var(--border); }
+  .cites { margin-top: 8px; font-size: 13px; color: var(--muted); }
+  .cites a { color: var(--link); text-decoration: none; }
+  .cites .doc { color: var(--muted); }
+  .cites span.item { display: inline-block; background: var(--panel2);
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 1px 10px; margin: 2px 4px 2px 0; }
+  .stats { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .ctxbtn { font-size: 12px; color: var(--link); cursor: pointer;
+            background: none; border: none; padding: 0; margin-top: 6px; }
+  .ctx { display: none; margin-top: 8px; border-top: 1px dashed var(--border);
+         padding-top: 8px; font-size: 13px; }
+  .ctx.open { display: block; }
+  .ctx .hit { margin-bottom: 10px; }
+  .ctx .hit .h { color: var(--accent); font-size: 12px; }
+  .ctx .hit .t { color: var(--muted); white-space: pre-wrap; max-height: 160px;
+                 overflow-y: auto; }
+  form { position: fixed; bottom: 0; left: 0; right: 0;
+         background: linear-gradient(transparent, var(--bg) 25%);
+         padding: 24px 16px 20px; }
+  .bar { max-width: 860px; margin: 0 auto; display: flex; gap: 8px; }
+  textarea { flex: 1; resize: none; background: var(--panel2);
+      color: var(--text); border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 12px; font: inherit; height: 52px; }
+  button.send { background: var(--accent); color: #16120c; font-weight: 600;
+      border: none; border-radius: 8px; padding: 0 22px; cursor: pointer; }
+  button.send:disabled { opacity: .5; cursor: default; }
+  /* sources overlay */
+  #sources { display: none; position: fixed; inset: 0;
+             background: rgba(10,13,17,.92); overflow-y: auto; z-index: 10; }
+  #sources.open { display: block; }
+  #sources .inner { max-width: 860px; margin: 40px auto; background: var(--panel);
+      border: 1px solid var(--border); border-radius: 10px; padding: 24px; }
+  #sources h2 { margin-top: 0; }
+  #sources h3 { color: var(--accent); font-size: 14px; text-transform: uppercase;
+                letter-spacing: .05em; }
+  #sources li { margin-bottom: 8px; }
+  #sources .d { color: var(--muted); font-size: 13px; }
+  #sources .close { float: right; color: var(--link); cursor: pointer; }
+  #sources a { color: var(--link); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Emergency Knowledge Kit</h1>
+    <span class="sub">offline · answers only from local sources</span>
+    <a id="showSources">Sources</a>
+  </header>
+  <div id="chat"></div>
+</div>
+
+<form id="form">
+  <div class="bar">
+    <textarea id="q" placeholder="Ask about first aid, water, shelter, medicine…"
+              autofocus></textarea>
+    <button class="send" id="send" type="submit">Ask</button>
+  </div>
+</form>
+
+<div id="sources"><div class="inner">
+  <span class="close" onclick="document.getElementById('sources').classList.remove('open')">close ✕</span>
+  <h2>What this kit knows</h2>
+  <div id="sourcesBody">loading…</div>
+</div></div>
+
+<script>
+const chat = document.getElementById('chat');
+const form = document.getElementById('form');
+const qbox = document.getElementById('q');
+const send = document.getElementById('send');
+const history = [];  // [{role, content}] — last 6 turns sent with each ask
+const MAX_TURNS = 6;
+
+// Minimal markdown renderer for model output (no external libs).
+function esc(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function inline(s) {
+  return s
+    .replace(/`([^`]+)`/g, (_, c) => '<code>' + c + '</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[\s(])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+|\/[^)\s]*)\)/g,
+             '<a href="$2" target="_blank">$1</a>');
+}
+function renderMd(src) {
+  const lines = esc(src).split('\n');
+  const out = [];
+  let list = null, para = [], code = null, table = null;
+  const flushPara = () => {
+    if (para.length) { out.push('<p>' + inline(para.join(' ')) + '</p>'); para = []; }
+  };
+  const flushList = () => {
+    if (list) { out.push('<' + list.tag + '>' + list.items.map(i =>
+      '<li>' + inline(i) + '</li>').join('') + '</' + list.tag + '>'); list = null; }
+  };
+  const flushTable = () => {
+    if (table) {
+      const rows = table.map((cells, i) =>
+        '<tr>' + cells.map(c => (i === 0 ? '<th>' : '<td>') + inline(c) +
+                           (i === 0 ? '</th>' : '</td>')).join('') + '</tr>');
+      out.push('<table>' + rows.join('') + '</table>'); table = null;
+    }
+  };
+  const flushAll = () => { flushPara(); flushList(); flushTable(); };
+  for (const raw of lines) {
+    const line = raw.replace(/\s+$/, '');
+    if (code !== null) {
+      if (/^```/.test(line)) { out.push('<pre><code>' + code.join('\n') + '</code></pre>'); code = null; }
+      else code.push(line);
+      continue;
+    }
+    let m;
+    if (/^```/.test(line)) { flushAll(); code = []; }
+    else if ((m = line.match(/^(#{1,4})\s+(.*)/))) {
+      flushAll(); out.push(`<h${m[1].length}>` + inline(m[2]) + `</h${m[1].length}>`);
+    } else if (/^(---+|\*\*\*+)$/.test(line)) { flushAll(); out.push('<hr>'); }
+    else if ((m = line.match(/^&gt;\s?(.*)/))) {
+      flushAll(); out.push('<blockquote>' + inline(m[1]) + '</blockquote>');
+    } else if (/^\s*\|.*\|\s*$/.test(line)) {
+      flushPara(); flushList();
+      const cells = line.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+      if (cells.every(c => /^:?-{2,}:?$/.test(c))) continue;  // separator row
+      (table = table || []).push(cells);
+    } else if ((m = line.match(/^\s*([-*+]|\d+[.)])\s+(.*)/))) {
+      flushPara(); flushTable();
+      const tag = /^[-*+]$/.test(m[1]) ? 'ul' : 'ol';
+      if (!list || list.tag !== tag) { flushList(); list = {tag, items: []}; }
+      list.items.push(m[2]);
+    } else if (line.trim() === '') { flushAll(); }
+    else { flushList(); flushTable(); para.push(line.trim()); }
+  }
+  if (code !== null) out.push('<pre><code>' + code.join('\n') + '</code></pre>');
+  flushAll();
+  return out.join('\n');
+}
+
+function el(tag, cls, parent) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+function addMsg(who, text) {
+  const m = el('div', 'msg ' + who, chat);
+  el('div', 'who', m).textContent = who === 'user' ? 'You' : 'Kit';
+  const b = el('div', 'body', m);
+  b.textContent = text || '';
+  m.scrollIntoView({block: 'end'});
+  return {m, b};
+}
+
+function renderCites(m, meta) {
+  if (!meta || (!meta.docs.length && !meta.wiki.length)) return;
+  const c = el('div', 'cites', m);
+  c.append('Sources: ');
+  for (const w of meta.wiki) {
+    const s = el('span', 'item', c);
+    const a = el('a', '', s);
+    a.href = w.url; a.target = '_blank';
+    a.textContent = 'Wikipedia: ' + w.title;
+  }
+  for (const d of meta.docs) {
+    const s = el('span', 'item doc', c);
+    s.textContent = d.file + (d.page ? ' — p. ' + d.page : ' — chunk ' + d.chunk);
+  }
+}
+
+function renderCtx(m, meta) {
+  if (!meta || (!meta.docs.length && !meta.wiki.length)) return;
+  const btn = el('button', 'ctxbtn', m);
+  btn.textContent = 'Show retrieved context ▸';
+  const ctx = el('div', 'ctx', m);
+  btn.onclick = () => {
+    ctx.classList.toggle('open');
+    btn.textContent = ctx.classList.contains('open')
+      ? 'Hide retrieved context ▾' : 'Show retrieved context ▸';
+  };
+  for (const d of meta.docs) {
+    const h = el('div', 'hit', ctx);
+    el('div', 'h', h).textContent =
+      `${d.file} · chunk ${d.chunk}${d.page ? ' · p. ' + d.page : ''} · cosine ${d.score}`;
+    el('div', 't', h).textContent = d.text;
+  }
+  for (const w of meta.wiki) {
+    const h = el('div', 'hit', ctx);
+    el('div', 'h', h).textContent = 'Wikipedia · ' + w.title;
+    el('div', 't', h).textContent = w.text;
+  }
+}
+
+async function ask(question) {
+  addMsg('user', question);
+  const {m, b} = addMsg('assistant', '');
+  b.textContent = '…';
+  send.disabled = true;
+  let meta = null, answer = '';
+  try {
+    const res = await fetch('/api/ask', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({question, history: history.slice(-MAX_TURNS * 2)}),
+    });
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, {stream: true});
+      let idx;
+      while ((idx = buf.indexOf('\n\n')) >= 0) {
+        const block = buf.slice(0, idx); buf = buf.slice(idx + 2);
+        let ev = 'message', data = '';
+        for (const line of block.split('\n')) {
+          if (line.startsWith('event:')) ev = line.slice(6).trim();
+          else if (line.startsWith('data:')) data += line.slice(5).trim();
+        }
+        if (!data) continue;
+        const obj = JSON.parse(data);
+        if (ev === 'meta') {
+          meta = obj;
+        } else if (ev === 'token') {
+          answer += obj.t;
+          b.innerHTML = renderMd(answer);
+        } else if (ev === 'done') {
+          const st = el('div', 'stats', m);
+          st.textContent = `retrieval ${meta ? meta.retrieval_seconds : '?'}s · ` +
+            `llm ${obj.llm_seconds}s · prompt ${obj.prompt_tokens ?? '?'} tok · ` +
+            `completion ${obj.completion_tokens ?? '?'} tok`;
+        } else if (ev === 'error') {
+          answer += '\n\n`[error: ' + obj.message + ']`';
+          b.innerHTML = renderMd(answer);
+        }
+      }
+      m.scrollIntoView({block: 'end'});
+    }
+  } catch (e) {
+    b.innerHTML = renderMd((answer || '') + '\n\n`[request failed: ' + esc(String(e)) + ']`');
+  }
+  renderCites(m, meta);
+  renderCtx(m, meta);
+  history.push({role: 'user', content: question});
+  history.push({role: 'assistant', content: answer});
+  while (history.length > MAX_TURNS * 2) history.shift();
+  send.disabled = false;
+  qbox.focus();
+}
+
+form.onsubmit = (e) => {
+  e.preventDefault();
+  const q = qbox.value.trim();
+  if (!q || send.disabled) return;
+  qbox.value = '';
+  ask(q);
+};
+qbox.onkeydown = (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+};
+
+document.getElementById('showSources').onclick = async () => {
+  document.getElementById('sources').classList.add('open');
+  const body = document.getElementById('sourcesBody');
+  try {
+    const s = await (await fetch('/api/sources')).json();
+    body.innerHTML = '';
+    const h3a = el('h3', '', body); h3a.textContent = 'Offline Wikipedia (kiwix)';
+    const ula = el('ul', '', body);
+    for (const z of s.zims) {
+      const li = el('li', '', ula);
+      const a = el('a', '', li);
+      a.href = s.kiwix_url + z.path; a.target = '_blank';
+      a.textContent = z.title;
+      li.append(` — ${z.articles.toLocaleString()} articles`);
+      el('div', 'd', li).textContent = z.summary;
+    }
+    const h3b = el('h3', '', body); h3b.textContent = 'Indexed documents';
+    const ulb = el('ul', '', body);
+    for (const d of s.docs) {
+      const li = el('li', '', ulb);
+      li.textContent = `${d.file} — ${d.chunks} chunks`;
+      el('div', 'd', li).textContent = d.description;
+    }
+  } catch (e) { body.textContent = 'failed to load sources: ' + e; }
+};
+</script>
+</body>
+</html>
