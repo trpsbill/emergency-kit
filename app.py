@@ -64,12 +64,15 @@ def maps_list():
     files = sorted(MAPS.glob("*.pmtiles")) if MAPS.is_dir() else []
     out = []
     for f in files:
-        topo = f.stem.endswith("-topo")
-        name = f.stem.removesuffix("-topo").replace("-", " ").title()
+        suffix = next((s for s in ("-topo", "-imagery")
+                       if f.stem.endswith(s)), None)
+        name = f.stem.removesuffix(suffix or "").replace("-", " ").title()
+        if suffix:
+            name += f" {suffix[1:].title()} (USGS)"
         out.append({
-            "name": name + (" Topo (USGS)" if topo else ""),
+            "name": name,
             "url": f"/maps/{f.name}",
-            "type": "raster" if topo else "vector",
+            "type": "raster" if suffix else "vector",
             "size_mb": round(f.stat().st_size / 1e6)})
     return JSONResponse(out)
 

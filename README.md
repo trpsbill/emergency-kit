@@ -146,6 +146,7 @@ Everything `setup.sh` installs (licenses and exact filenames in
 **Offline maps** (per-state, via `setup.sh`)
 - [OpenStreetMap street maps](https://protomaps.com/) — vector extracts from the Protomaps daily planet build (ODbL, ~0.5–2 GB per state)
 - [USGS US Topo](https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer) — raster topo tiles from The National Map (public domain, ~2–4 GB per state at the default zoom)
+- [USGS aerial imagery](https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer) — NAIP-based imagery from The National Map (public domain, ~3–6 GB per state at the default ~16 m/px)
 
 **Offline Wikipedia (ZIM)**
 - [WikiMed Medical Encyclopedia](https://download.kiwix.org/zim/wikipedia/wikipedia_en_medicine_maxi_2026-04.zim) — ~362k medical articles
@@ -174,12 +175,22 @@ Web UI:
 
 Open http://localhost:8000, and http://localhost:8000/map for offline maps.
 `setup.sh` offers two per-state map downloads (also non-interactive:
-`./setup.sh --maps texas --topo texas`): OpenStreetMap street/trail vector
-maps extracted from the Protomaps daily build, and USGS US Topo raster tiles
-fetched from The National Map (set `TOPO_MAX_ZOOM=15` before running for full
-1:24k contour detail — roughly 16× the size and time of the default 13). The
-map page auto-zooms to each extract and shows a region dropdown when several
-are downloaded.
+`./setup.sh --maps texas --topo texas --imagery texas`): OpenStreetMap
+street/trail vector maps extracted from the Protomaps daily build, USGS US
+Topo raster tiles, and USGS aerial imagery, both fetched from The National
+Map (`TOPO_MAX_ZOOM=15` for full 1:24k contour detail, roughly 16× the size
+and time of the default 13; imagery defaults to ~16 m/px statewide). The map
+page auto-zooms to each extract and shows a region dropdown when several are
+downloaded.
+
+Statewide building-level imagery is not laptop-viable (~100+ GB/state), but a
+high-detail patch around an area you care about is — e.g. ~1 m/px over a
+~30-mile square is ~2 GB:
+
+```bash
+IMAGERY_MAX_ZOOM=17 python3 scripts/fetch_usgs.py maps/home-imagery.mbtiles -97.0,30.0,-96.5,30.4 imagery
+./maps/pmtiles convert maps/home-imagery.mbtiles maps/home-imagery.pmtiles && rm maps/home-imagery.mbtiles
+```
 
 The chat UI streams answers with last-6-turn conversation memory,
 citation chips (kiwix citations link into the article, document citations show

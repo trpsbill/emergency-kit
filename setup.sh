@@ -8,6 +8,7 @@
 #   ./setup.sh --all               non-interactive: all docs/ZIMs, no maps
 #   ./setup.sh --all --maps texas,oklahoma   ...plus specific state maps
 #   ./setup.sh --topo texas        USGS topo raster for specific states
+#   ./setup.sh --imagery texas     USGS aerial imagery for specific states
 #   ./setup.sh --maps texas        maps only prompt skipped, docs interactive
 #
 # Already-downloaded files are skipped; delete a file to re-fetch it.
@@ -118,11 +119,13 @@ ALL_TAGS=$(echo "$SOURCES" | cut -d'|' -f1)
 NONINTERACTIVE=""
 MAPS_ARG=""
 TOPO_ARG=""
+IMAGERY_ARG=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --all) NONINTERACTIVE=1 ;;
     --maps) shift; MAPS_ARG="${1:-}" ;;
     --topo) shift; TOPO_ARG="${1:-}" ;;
+    --imagery) shift; IMAGERY_ARG="${1:-}" ;;
     *) echo "unknown option: $1"; exit 1 ;;
   esac
   shift
@@ -252,7 +255,15 @@ else
   TOPO_SELECTED=""
 fi
 
-if [ -n "$MAP_SELECTED" ] || [ -n "$TOPO_SELECTED" ]; then
+if [ -n "$IMAGERY_ARG" ]; then
+  IMAGERY_SELECTED=$(echo "$IMAGERY_ARG" | tr ',' '\n')
+elif [ -z "$NONINTERACTIVE" ] && command -v whiptail >/dev/null 2>&1 && [ -t 0 ]; then
+  IMAGERY_SELECTED=$(pick_states "USGS aerial imagery (~16 m/px statewide, ~3-6 GB/state)" "-imagery") || IMAGERY_SELECTED=""
+else
+  IMAGERY_SELECTED=""
+fi
+
+if [ -n "$MAP_SELECTED" ] || [ -n "$TOPO_SELECTED" ] || [ -n "$IMAGERY_SELECTED" ]; then
   # map viewer libraries (MapLibre BSD, pmtiles BSD, protomaps basemaps BSD,
   # Noto fonts OFL) — vendored locally so the viewer works fully offline
   if [ ! -f static/vendor/maplibre-gl.js ]; then
@@ -310,25 +321,30 @@ if [ -n "$MAP_SELECTED" ]; then
   fi
 fi
 
-if [ -n "$TOPO_SELECTED" ]; then
-  # USGS US Topo raster tiles (public domain). TOPO_MAX_ZOOM env controls
-  # detail: 13 (default) ~1:70k with first contours; 15 = full 1:24k detail
-  # but ~16x the tiles/time/disk.
+# USGS raster layers (public domain). Zoom envs control detail: topo
+# TOPO_MAX_ZOOM (13 default, 15 = full 1:24k, ~16x cost); imagery
+# IMAGERY_MAX_ZOOM (13 default ~16 m/px; 16-17 shows buildings but is
+# ~100+ GB per state — use scripts/fetch_usgs.py directly with a small
+# bbox for a high-detail area of interest).
+fetch_usgs_layer() {  # $1 = selected tags, $2 = suffix (topo|imagery)
   while IFS='|' read -r tag bbox; do
-    echo "$TOPO_SELECTED" | grep -qx "$tag" || continue
-    if [ -s "maps/$tag-topo.pmtiles" ]; then
-      echo "skip (exists): maps/$tag-topo.pmtiles"; continue
+    echo "$1" | grep -qx "$tag" || continue
+    if [ -s "maps/$tag-$2.pmtiles" ]; then
+      echo "skip (exists): maps/$tag-$2.pmtiles"; continue
     fi
-    echo "fetching USGS topo: $tag ($bbox)"
-    if python3 scripts/fetch_topo.py "maps/$tag-topo.mbtiles" "$bbox" \
-        && ./maps/pmtiles convert "maps/$tag-topo.mbtiles" "maps/$tag-topo.pmtiles"; then
-      rm -f "maps/$tag-topo.mbtiles"
-      du -h "maps/$tag-topo.pmtiles"
+    echo "fetching USGS $2: $tag ($bbox)"
+    if python3 scripts/fetch_usgs.py "maps/$tag-$2.mbtiles" "$bbox" "$2" \
+        && ./maps/pmtiles convert "maps/$tag-$2.mbtiles" "maps/$tag-$2.pmtiles"; then
+      rm -f "maps/$tag-$2.mbtiles"
+      du -h "maps/$tag-$2.pmtiles"
     else
-      echo "  FAILED: $tag topo (mbtiles kept for resume — re-run setup.sh)"
+      echo "  FAILED: $tag $2 (mbtiles kept for resume — re-run setup.sh)"
     fi
   done <<< "$STATES"
-fi
+}
+
+[ -n "$TOPO_SELECTED" ] && fetch_usgs_layer "$TOPO_SELECTED" topo
+[ -n "$IMAGERY_SELECTED" ] && fetch_usgs_layer "$IMAGERY_SELECTED" imagery
 
 # ---------------------------------------------------------------------------
 # Rebuild the index if the environment is ready
