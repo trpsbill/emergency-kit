@@ -113,6 +113,40 @@ updating a ZIM: drop it in `./kiwix/zims/`, restart kiwix-serve, and add its
 book name (the `/content/<name>` path segment, visible on the kiwix landing
 page) to `KIWIX_BOOKS` in kit.py, most-useful first.
 
+## Reference library
+
+Everything `setup.sh` installs (licenses and exact filenames in
+[docs/SOURCES.md](docs/SOURCES.md)):
+
+**Survival, SERE, fieldcraft**
+- [FM 21-76 — Survival](https://archive.org/download/fm-21-76-us-army-survival-manual/FM%2021-76%20US%20ARMY%20SURVIVAL%20MANUAL.pdf) — shelter, water, fire, food, plants, traps
+- [FM 21-76-1 — Survival, Evasion, and Recovery](https://archive.org/download/Fm21-76-1/Fm21-76-1_djvu.txt) — multiservice SERE quick reference
+- [FM 21-75 — Combat Skills of the Soldier](https://archive.org/download/milmanual-fm-21-75-combat-skills-of-the-soldier/fm_21-75_combat_skills_of_the_soldier_djvu.txt) — cover, concealment, movement, observation
+- [FM 7-8 — Infantry Rifle Platoon and Squad](https://archive.org/download/fm-7-8-infantry-rifle-platoon-and-sqaud-1992/FM%207-8%20Infantry%20Rifle%20Platoon%20And%20Sqaud%20%201992_djvu.txt) — small-unit tactics, patrolling, defense
+- [FM 5-103 — Survivability](https://archive.org/download/fm-5-103-survivability-1985/FM%205-103%20Survivability%20%201985_djvu.txt) — protective positions and field fortification
+- [FM 31-70 — Basic Cold Weather Manual](https://archive.org/download/fm-31-70-basic-cold-weather-manual-1968/FM%2031-70%20Basic%20Cold%20Weather%20Manual%20%201968_djvu.txt) — clothing, shelters, cold injuries
+
+**Health, sanitation, long-duration emergencies**
+- [FM 4-25.11 — First Aid](https://archive.org/download/FM4-25x11/FM4-25x11.pdf) — joint-services first aid
+- [FM 21-10 — Field Hygiene and Sanitation](https://archive.org/download/milmanual-fm-21-10-mcrp-4-11.1d-field-hygiene-and-sanitation/fm_21-10_mcrp_4-11.1d_field_hygiene_and_sanitation_djvu.txt) — camp sanitation, waste, disease prevention
+- [EPA — Emergency Disinfection of Drinking Water](https://www.epa.gov/ground-water-and-drinking-water/emergency-disinfection-drinking-water)
+- [Kearny — Nuclear War Survival Skills](https://archive.org/download/nuclear-war-survival-skills-by-cresson-h.-kearny/Nuclear%20War%20Survival%20Skills%2C%20by%20Cresson%20H.%20Kearny_djvu.txt) — fallout shelters, expedient meters, post-fallout water and food
+- [FM 3-19.15 — Civil Disturbance Operations](https://archive.org/download/fm-3-19.15-civil-disturbance-operations-2005/FM%203-19.15%20Civil%20Disturbance%20Operations%20%202005_djvu.txt) — crowd dynamics, riot-control doctrine
+
+**Food: growing, preserving, trapping**
+- [USDA — Complete Guide to Home Canning (2015)](https://archive.org/download/usda-complete-guide-to-home-canning-2015-revision/USDA-Complete-Guide-to-Home-Canning-2015-revision_djvu.txt)
+- [Watts — Vegetable Gardening (1912)](https://archive.org/download/vegetablegardeni00wattrich/vegetablegardeni00wattrich_djvu.txt)
+- [Gibson — Camp Life in the Woods and the Tricks of Trapping (1881)](https://archive.org/download/william-hamilton-gibson-camp-life-in-the-woods-the-tricks-of-trapping/William_Hamilton_Gibson_Camp_Life_in_the_Woods_%26_the_Tricks_of_Trapping_djvu.txt)
+
+**Woodcraft, camping, primitive building**
+- [Beard — Shelters, Shacks and Shanties (1914)](https://www.gutenberg.org/ebooks/28255) — structures built with axe and hand tools
+- [Nessmuk — Woodcraft and Camping](https://www.gutenberg.org/ebooks/34607)
+- [Boy Scouts Handbook, 1st ed. (1911)](https://www.gutenberg.org/ebooks/29558) — firecraft, knots, camping, signaling
+
+**Offline Wikipedia (ZIM)**
+- [WikiMed Medical Encyclopedia](https://download.kiwix.org/zim/wikipedia/wikipedia_en_medicine_maxi_2026-04.zim) — ~362k medical articles
+- [Wikipedia top-100 articles](https://download.kiwix.org/zim/wikipedia/wikipedia_en_100_2026-08.zim)
+
 ## Adding documents
 
 Drop PDF/MD/TXT files into `./docs/` and re-run `kit.py index`. Stick to
