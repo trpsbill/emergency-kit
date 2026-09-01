@@ -38,6 +38,7 @@ STATIC = Path(__file__).parent / "static"
 MAPS = Path(__file__).parent / "maps"
 
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
+app.mount("/docs", StaticFiles(directory=kit.DOCS_DIR), name="docs")
 if MAPS.is_dir():
     # StaticFiles serves byte ranges, which pmtiles clients require
     app.mount("/maps", StaticFiles(directory=MAPS), name="maps")
@@ -152,6 +153,10 @@ def ask(req: AskRequest):
                 "tokens_per_s": round(comp / t_llm, 1) if comp and t_llm > 0 else None,
             })
         yield _sse("done", done)
+        if not history:   # first exchange of a chat — generate its title
+            title = kit.name_chat(question, "".join(answer_parts))
+            if title:
+                yield _sse("title", {"title": title})
         if SUGGESTIONS:
             replies = kit.suggest_replies(question, "".join(answer_parts))
             if replies:

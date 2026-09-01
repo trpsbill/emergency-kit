@@ -567,6 +567,22 @@ def suggest_replies(question, answer, n=4):
         return []
 
 
+def name_chat(question, answer):
+    """3-6 word conversation title. Returns '' on failure."""
+    prompt = (
+        "A conversation with an offline emergency assistant began:\n"
+        f"User: {question[:500]}\nAssistant: {answer[:800]}\n\n"
+        "Write a title for this conversation: 3-6 words, no punctuation at "
+        "the end, no quotes, capture the topic not the phrasing. "
+        "Reply with the title only.")
+    try:
+        text, _ = chat([{"role": "user", "content": prompt}])
+        title = text.strip().splitlines()[0].strip().strip('"\'')
+        return title[:60]
+    except Exception:
+        return ""
+
+
 # ----------------------------------------------------------------------------
 # CLI
 # ----------------------------------------------------------------------------
