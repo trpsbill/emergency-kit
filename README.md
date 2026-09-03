@@ -131,11 +131,24 @@ To have it start automatically when the computer boots, add to your crontab:
 
 ## Adding your own content
 
-Drop any PDF, text, or Markdown file into `docs/` and re-run
-`./venv/bin/python kit.py index` — it becomes part of the assistant's
-library immediately. Stick to material you have the right to use; see
-[docs/SOURCES.md](docs/SOURCES.md) for what's included and where it came
-from (all public domain or freely licensed).
+There are two places for your files, depending on the material:
+
+- **`docs/`** — extra *shared* reference material. Drop any PDF, text, or
+  Markdown file in here, re-run the index, and it becomes part of the
+  library. Keep the public standard: material you have the right to
+  redistribute (public domain or freely licensed). See
+  [docs/SOURCES.md](docs/SOURCES.md) for what's included and where it came
+  from.
+-   **`personal/`** — *your own* documents: notes, equipment manuals, local
+  procedures, self-authored guides. Drop any PDF, text, or Markdown file in
+  here (subfolders are fine); it's indexed the same way but is meant for
+  material you own, so you don't need to worry about its license. This
+  folder is local-only: it's not committed to git, and the kit never sends
+  file contents anywhere — everything it "talks to" is on your own machine.
+
+After adding or removing files in either folder, re-run
+`./venv/bin/python kit.py index` and the assistant picks them up
+immediately.
 
 More ZIM archives (other Wikipedia editions, WikiHow, Project Gutenberg…)
 are at [download.kiwix.org/zim](https://download.kiwix.org/zim/) — drop them

@@ -39,6 +39,8 @@ MAPS = Path(__file__).parent / "maps"
 
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 app.mount("/docs", StaticFiles(directory=kit.DOCS_DIR), name="docs")
+if kit.PERSONAL_DIR.is_dir():
+    app.mount("/personal", StaticFiles(directory=kit.PERSONAL_DIR), name="personal")
 if MAPS.is_dir():
     # StaticFiles serves byte ranges, which pmtiles clients require
     app.mount("/maps", StaticFiles(directory=MAPS), name="maps")
@@ -118,6 +120,7 @@ def ask(req: AskRequest):
             "retrieval_seconds": round(t_retrieval, 2),
             "docs": [{"file": h["file"], "chunk": h["chunk"],
                       "page": h.get("page"), "score": round(h["score"], 3),
+                      "personal": h.get("personal", False),
                       "text": h["text"]} for h in doc_hits],
             "wiki": [{"title": h["title"],
                       "url": KIWIX_PUBLIC_URL + h["url"],

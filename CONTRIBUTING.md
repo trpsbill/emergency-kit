@@ -31,8 +31,10 @@ The most valuable non-code contribution. Requirements:
    `.txt`) over scanned PDFs — smaller and better retrieval.
 3. Add the source to **both** `setup.sh` (the `SOURCES` manifest) and
    `docs/SOURCES.md` (with title, license, and download URL).
-4. Documents themselves are never committed — `docs/` is gitignored except
-   `SOURCES.md`.
+ 4. Documents themselves are never committed — `docs/` is gitignored except
+    `SOURCES.md`. (Personal, user-owned documents go in `personal/`, which
+    is gitignored except its `README.md` — they're not redistributable
+    library content, so they don't need a provenance entry.)
 5. Sanity-check retrieval: `./venv/bin/python kit.py ask -v "<question your
    source should answer>"` and confirm the right chunks surface.
 

@@ -432,6 +432,11 @@ function addMsg(who, text) {
   return {m, b};
 }
 
+// indexed doc -> browser URL; personal/ docs live under /personal
+function docUrl(d) {
+  return (d.personal ? '/personal/' : '/docs/') + encodeURIComponent(d.file);
+}
+
 function renderCites(m, meta) {
   if (!meta || (!meta.docs.length && !meta.wiki.length)) return;
   const c = el('div', 'cites', m);
@@ -444,7 +449,7 @@ function renderCites(m, meta) {
   for (const d of meta.docs) {
     const s = el('span', 'item', c);
     s.textContent = d.file + (d.page ? ' — p. ' + d.page : ' — chunk ' + d.chunk);
-    let url = '/docs/' + encodeURIComponent(d.file);
+    let url = docUrl(d);
     if (d.page && d.file.toLowerCase().endsWith('.pdf')) url += '#page=' + d.page;
     s.onclick = () => openDoc(d.file + (d.page ? ' — p. ' + d.page : ''), url);
   }
@@ -660,6 +665,19 @@ document.getElementById('showSources').onclick = async () => {
       a.onclick = () => openDoc(d.file, '/docs/' + encodeURIComponent(d.file));
       li.append(` — ${d.chunks} chunks`);
       el('div', 'd', li).textContent = d.description;
+    }
+    if (s.docs_personal && s.docs_personal.length) {
+      const h3p = el('h3', '', body); h3p.textContent = 'Personal documents (yours)';
+      const ulp = el('ul', '', body);
+      for (const d of s.docs_personal) {
+        const li = el('li', '', ulp);
+        const a = el('a', '', li);
+        a.textContent = d.file;
+        a.style.cursor = 'pointer';
+        a.onclick = () => openDoc(d.file, '/personal/' + encodeURIComponent(d.file));
+        li.append(` — ${d.chunks} chunks`);
+        el('div', 'd', li).textContent = d.description;
+      }
     }
   } catch (e) { body.textContent = 'failed to load sources: ' + e; }
 };

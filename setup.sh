@@ -50,7 +50,19 @@ blacksmithing|standard-blacksmithing-holmstrom.txt|txt|Holmstrom, Standard Black
 war-garden|war-gardening-home-storage-vegetables.txt|txt|War Gardening and Home Storage of Vegetables (1918)|https://archive.org/download/wargardeninghome00vict/wargardeninghome00vict_djvu.txt
 soap-making|art-of-soap-making-watt.txt|txt|Watt, The Art of Soap-Making (1896)|https://archive.org/download/artsoapmakingap00wattgoog/artsoapmakingap00wattgoog_djvu.txt
 bee-culture|abc-of-bee-culture-root.txt|txt|Root, ABC of Bee Culture (1890)|https://archive.org/download/CAT11016093/CAT11016093_djvu.txt
+tm9-8000|tm9-8000-automotive-principles.txt|txt|TM 9-8000 Principles of Automotive Vehicles (engines, drivetrain, electrics)|https://archive.org/download/tm-9-8000-principles-of-automotive-vehicles-1985/TM9-8000_Principles_of_automotive_vehicles_1985_djvu.txt
+neets-1|neets-mod1-dc-electricity.txt|txt|NEETS Module 1: Matter, Energy, DC Electricity (Navy electronics course)|https://archive.org/download/NeetsModule1introductionToMatterEnergyAndDirectCurrent/Navy-01-IntroductionToMatterEnergyAndDirectCurrent._djvu.txt
+neets-2|neets-mod2-ac-transformers.txt|txt|NEETS Module 2: AC and Transformers|https://archive.org/download/NeetsModule2introductionToAlternatingCurrentAndTransformers/Navy-02-IntroductionToAlternatingCurrentAndTransformers_djvu.txt
+neets-10|neets-mod10-propagation-antennas.txt|txt|NEETS Module 10: Wave Propagation, Transmission Lines, Antennas|https://archive.org/download/NEETSModule10/NEETSModule10_djvu.txt
+navy-math|navy-basic-math-algebra.txt|txt|Navy Basic Mathematics and Algebra (NAVEDTRA)|https://archive.org/download/NeetsModule1introductionToMatterEnergyAndDirectCurrent/NavyMath-vol-1_djvu.txt
+fm24-18|fm24-18-radio-communications.txt|txt|FM 24-18 Tactical Single-Channel Radio (field-expedient antennas, procedures)|https://archive.org/download/FM2418TacticalSingleChannelRadioCommunicationsTechniques/FM%2024-18%20Tactical%20Single%20Channel%20Radio%20Communications%20Techniques_djvu.txt
+mcrp-radio|mcrp3-40.3b-radio-operators-handbook.txt|txt|MCRP 3-40.3B Radio Operator's Handbook|https://archive.org/download/radio-operators-handbook-mcrp-3-40.3-b/Radio%20Operators%20Handbook%20-%20MCRP%203-40.3B_djvu.txt
+fcc-part97|fcc-part97-amateur-radio-rules.txt|ecfr|FCC Part 97 Amateur Radio Service rules (incl. emergency communications)|https://www.ecfr.gov/api/versioner/v1/full/2026-08-01/title-47.xml?part=97
+sof-medical|sof-medical-handbook.txt|txt|US Special Operations Forces Medical Handbook (2001, incl. medications)|https://archive.org/download/u.-s.-special-operations-forces-medical-handbook/U.S.%20Special%20Operations%20Forces%20Medical%20Handbook_djvu.txt
+war-surgery|emergency-war-surgery-2018.txt|txt|Emergency War Surgery 5th ed. (2018, Borden Institute)|https://archive.org/download/emergency-war-surgery-5th-ed.-2018/Emergency%20War%20Surgery%205th%20ed.%20%202018_djvu.txt
 zim-medicine|wikipedia_en_medicine_maxi_2026-04.zim|zim|ZIM: WikiMed Medical Encyclopedia (~2.1 GB)|https://download.kiwix.org/zim/wikipedia/wikipedia_en_medicine_maxi_2026-04.zim
+zim-wikibooks|wikibooks_en_all_maxi_2026-04.zim|zim|ZIM: Wikibooks (textbooks, how-tos, ham radio; ~6.2 GB)|https://download.kiwix.org/zim/wikibooks/wikibooks_en_all_maxi_2026-04.zim
+zim-simple|wikipedia_en_simple_all_maxi_2026-05.zim|zim|ZIM: Simple English Wikipedia (K-12 breadth; ~3.5 GB)|https://download.kiwix.org/zim/wikipedia/wikipedia_en_simple_all_maxi_2026-05.zim
 zim-wiki100|wikipedia_en_100_2026-08.zim|zim|ZIM: Wikipedia top-100 articles (~320 MB)|https://download.kiwix.org/zim/wikipedia/wikipedia_en_100_2026-08.zim
 EOF
 )
@@ -207,6 +219,24 @@ while IFS='|' read -r tag file kind desc url; do
       if curl -fsSL -A "Mozilla/5.0" --max-time 300 -o "$tmp" "$url" \
           && epa_to_text "$tmp" "$dest"; then
         rm -f "$tmp"; ok=$((ok + 1))
+      else rm -f "$tmp"; echo "  FAILED: $dest"; failed=$((failed + 1)); fi
+      ;;
+    ecfr)
+      tmp="$dest.xml.part"
+      if curl -fsL --compressed -A "Mozilla/5.0" --max-time 300 -o "$tmp" "$url" \
+          && python3 - "$tmp" "$dest" <<'PYEOF'
+import re, sys
+xml = open(sys.argv[1], encoding='utf-8', errors='replace').read()
+text = re.sub(r'<[^>]+>', ' ', xml)
+text = (text.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
+        .replace('&#8212;', '—').replace('&#167;', '§'))
+text = re.sub(r'[ \t]+', ' ', text)
+text = re.sub(r'\n\s*\n+', '\n\n', text).strip()
+open(sys.argv[2], 'w').write(
+    "FCC Part 97 - Amateur Radio Service Rules (47 CFR Part 97)\n"
+    "Source: eCFR (US government work, public domain)\n\n" + text)
+PYEOF
+      then rm -f "$tmp"; ok=$((ok + 1))
       else rm -f "$tmp"; echo "  FAILED: $dest"; failed=$((failed + 1)); fi
       ;;
     *)

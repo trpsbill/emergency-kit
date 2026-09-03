@@ -64,6 +64,48 @@ and is unrestricted.
 | `woodcraft-and-camping-nessmuk.txt` | G. W. Sears ("Nessmuk"), Woodcraft and Camping | Public domain (pre-1929) | https://www.gutenberg.org/cache/epub/34607/pg34607.txt |
 | `boy-scouts-handbook-1911.txt` | Boy Scouts Handbook, 1st ed. (1911 — firecraft, knots, camping, signaling, first aid) | Public domain (pre-1929) | https://www.gutenberg.org/cache/epub/29558/pg29558.txt |
 
+## Education fundamentals (electronics, math)
+
+| Save as | Document | License | Download |
+|---|---|---|---|
+| `neets-mod1-dc-electricity.txt` | NEETS Module 1 — Matter, Energy, and Direct Current (Navy Electricity and Electronics Training Series) | Public domain (US gov) | https://archive.org/download/NeetsModule1introductionToMatterEnergyAndDirectCurrent/Navy-01-IntroductionToMatterEnergyAndDirectCurrent._djvu.txt |
+| `neets-mod2-ac-transformers.txt` | NEETS Module 2 — Alternating Current and Transformers | Public domain (US gov) | https://archive.org/download/NeetsModule2introductionToAlternatingCurrentAndTransformers/Navy-02-IntroductionToAlternatingCurrentAndTransformers_djvu.txt |
+| `navy-basic-math-algebra.txt` | NAVEDTRA — Mathematics, Basic Math and Algebra, Vol. 1 | Public domain (US gov) | https://archive.org/download/NeetsModule1introductionToMatterEnergyAndDirectCurrent/NavyMath-vol-1_djvu.txt |
+
+Broader K-12 subject coverage (science, geography, history, language) comes
+from the Simple English Wikipedia and Wikibooks ZIMs (see README map/ZIM
+tables).
+
+## Engine and vehicle repair
+
+| Save as | Document | License | Download |
+|---|---|---|---|
+| `tm9-8000-automotive-principles.txt` | TM 9-8000, Principles of Automotive Vehicles (1985 — engines, fuel, electrical, drivetrain, troubleshooting) | Public domain (US gov) | https://archive.org/download/tm-9-8000-principles-of-automotive-vehicles-1985/TM9-8000_Principles_of_automotive_vehicles_1985_djvu.txt |
+
+## Radio communications (US amateur focus)
+
+| Save as | Document | License | Download |
+|---|---|---|---|
+| `neets-mod10-propagation-antennas.txt` | NEETS Module 10 — Wave Propagation, Transmission Lines, and Antennas | Public domain (US gov) | https://archive.org/download/NEETSModule10/NEETSModule10_djvu.txt |
+| `fm24-18-radio-communications.txt` | FM 24-18, Tactical Single-Channel Radio Communications Techniques (1987 — incl. field-expedient antenna construction) | Public domain (US gov) | https://archive.org/download/FM2418TacticalSingleChannelRadioCommunicationsTechniques/FM%2024-18%20Tactical%20Single%20Channel%20Radio%20Communications%20Techniques_djvu.txt |
+| `mcrp3-40.3b-radio-operators-handbook.txt` | MCRP 3-40.3B, Radio Operator's Handbook (1999) | Public domain (US gov) | https://archive.org/download/radio-operators-handbook-mcrp-3-40.3-b/Radio%20Operators%20Handbook%20-%20MCRP%203-40.3B_djvu.txt |
+| `fcc-part97-amateur-radio-rules.txt` | 47 CFR Part 97, Amateur Radio Service rules — incl. §97.401–407 emergency communications and RACES (converted from eCFR XML) | Public domain (US gov) | https://www.ecfr.gov/current/title-47/part-97 |
+
+The Wikibooks ZIM includes amateur-radio study material; ARRL publications
+(handbook, ARES manuals) are copyrighted and deliberately excluded.
+
+## Clinical medicine and medications
+
+| Save as | Document | License | Download |
+|---|---|---|---|
+| `sof-medical-handbook.txt` | US Special Operations Forces Medical Handbook (2001 — field diagnosis/treatment incl. medication guidance) | Public domain (US gov) | https://archive.org/download/u.-s.-special-operations-forces-medical-handbook/U.S.%20Special%20Operations%20Forces%20Medical%20Handbook_djvu.txt |
+| `emergency-war-surgery-2018.txt` | Emergency War Surgery, 5th ed. (2018, Borden Institute) | Public domain (US gov) | https://archive.org/download/emergency-war-surgery-5th-ed.-2018/Emergency%20War%20Surgery%205th%20ed.%20%202018_djvu.txt |
+
+Note: a modern PDR-style drug compendium has no freely redistributable
+equivalent (PDR, USP, and MedlinePlus drug monographs are all copyrighted).
+The closest lawful offline combination is the two handbooks above plus
+WikiMed's per-drug articles (dosing, interactions, contraindications).
+
 ## Worth adding manually (not auto-downloadable)
 
 - FEMA "Are You Ready?" all-hazards guide — fema.gov blocks scripted
@@ -74,3 +116,10 @@ and is unrestricted.
 
 Rebuild: download each file above to its `Save as` name, strip Gutenberg
 boilerplate, then `./venv/bin/python kit.py index`.
+
+## Your own documents
+
+Material you own or have the rights to (equipment manuals, personal notes,
+local procedures, or a drug compendium you legally possess) belongs in
+`./personal/`, not here — it's indexed identically, cited the same way, but
+kept out of the public library and out of git. See `personal/README.md`.

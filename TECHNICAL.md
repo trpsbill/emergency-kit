@@ -65,6 +65,10 @@ the [README](README.md).
    `search_query:`), and stores everything in a single `index.npz` (float32
    embeddings + chunk text + metadata + one LLM-generated description per
    document). Query time: cosine against the whole matrix, top-4 above 0.65.
+   Both `docs/` (downloaded library) and `personal/` (user drop-ins, scanned
+   recursively) are indexed into the same matrix; chunk metadata carries a
+   `personal` flag so the UI can serve links from `/docs/` vs `/personal/`
+   and list personal docs separately in the sources overlay.
 2. **Kiwix** — the question is stopword-stripped to 2–4 keywords for
    kiwix-serve's Xapian full-text search (`/search?pattern=…&format=xml&
    books.name=…`), each book in `KIWIX_BOOKS` in order. Retrieved articles
@@ -117,12 +121,13 @@ gitignored `.env` (see `.env.example`):
 - `POST /api/ask` `{question, history}` → SSE: `meta` (retrieved chunks,
   scores, images), `token` deltas, `done` (timings), `title`,
   `suggestions`, `error`
-- `GET /api/sources` — manifest (docs with descriptions + kiwix OPDS
-  catalog); also injected into the system prompt so the model can answer
-  "what do you know?"
+- `GET /api/sources` — manifest (public docs, personal docs, and kiwix OPDS
+  catalog, each with descriptions); also injected into the system prompt so
+  the model can answer "what do you know?"
 - `GET /api/maps` — available `.pmtiles` with type (vector/raster)
-- `/docs/*`, `/maps/*`, `/static/*` — static mounts (maps served with byte
-  ranges, which PMTiles clients require)
+- `/docs/*`, `/personal/*`, `/maps/*`, `/static/*` — static mounts (maps
+  served with byte ranges, which PMTiles clients require). `/personal` is
+  mounted only when the folder exists.
 
 ## Maps
 

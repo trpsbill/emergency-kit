@@ -72,10 +72,16 @@ EMBED_MODEL = _ENV.get("EMBED_MODEL", "text-embedding-nomic-embed-text-v1.5@f16"
 # first — searched in order, results merged up to TOP_K_WIKI.
 KIWIX_BOOKS = [
     "wikipedia_en_medicine_maxi_2026-04",
+    "wikibooks_en_all_maxi_2026-04",
+    "wikipedia_en_simple_all_maxi_2026-05",
     "wikipedia_en_100_2026-08",
 ]
 
 DOCS_DIR = Path(__file__).parent / "docs"
+# Your own documents (manual drop-in, see personal/README.md). Indexed and
+# cited like docs/ but kept separate; assumed to be material you own or have
+# rights to, so it need not be public domain.
+PERSONAL_DIR = Path(__file__).parent / "personal"
 INDEX_FILE = Path(__file__).parent / "index.npz"
 
 CHUNK_CHARS = 1600        # ~400 tokens per chunk
@@ -303,19 +309,29 @@ def cmd_index():
     files = sorted(p for p in DOCS_DIR.iterdir()
                    if p.suffix.lower() in (".pdf", ".md", ".txt")
                    and p.name != "SOURCES.md")
+    if PERSONAL_DIR.is_dir():
+        files += sorted(p for p in PERSONAL_DIR.rglob("*")
+                        if p.is_file()
+                        and p.suffix.lower() in (".pdf", ".md", ".txt")
+                        and not p.name.lower().endswith("readme.md"))
     if not files:
-        sys.exit(f"error: no PDF/MD/TXT files in {DOCS_DIR}")
+        sys.exit(f"error: no PDF/MD/TXT files in {DOCS_DIR}"
+                 f"{f' or {PERSONAL_DIR}' if PERSONAL_DIR.is_dir() else ''}")
     t0 = time.time()
     all_chunks, meta, descriptions = [], [], {}
     for f in files:
+        in_personal = PERSONAL_DIR in f.parents
+        relname = (f.relative_to(PERSONAL_DIR).as_posix()
+                   if in_personal else f.name)
         chunks = chunk_file(f)
-        print(f"{f.name}: {len(chunks)} chunks")
-        descriptions[f.name] = describe_doc(
-            f.name, "\n".join(c["text"] for c in chunks)[:2000])
-        print(f"  description: {descriptions[f.name]}")
+        print(f"{relname}: {len(chunks)} chunks")
+        descriptions[relname] = describe_doc(
+            relname, "\n".join(c["text"] for c in chunks)[:2000])
+        print(f"  description: {descriptions[relname]}")
         for i, c in enumerate(chunks):
             all_chunks.append(c["text"])
-            meta.append({"file": f.name, "chunk": i, "page": c["page"]})
+            meta.append({"file": relname, "chunk": i, "page": c["page"],
+                         "personal": in_personal})
     print(f"embedding {len(all_chunks)} chunks...")
     vecs = []
     for i in range(0, len(all_chunks), EMBED_BATCH):
@@ -504,23 +520,34 @@ def sources_manifest():
     """What the kit knows: served ZIMs + indexed docs with descriptions."""
     idx = load_index()
     descs = doc_descriptions()
-    counts = {}
+    counts, personal = {}, set()
     for m in idx["meta"]:
-        f = json.loads(str(m))["file"]
+        meta = json.loads(str(m))
+        f = meta["file"]
         counts[f] = counts.get(f, 0) + 1
+        if meta.get("personal"):
+            personal.add(f)
     docs = [{"file": f, "chunks": n, "description": descs.get(f, "")}
-            for f, n in sorted(counts.items())]
+            for f, n in sorted(counts.items())
+            if f not in personal]
+    docs_personal = [{"file": f, "chunks": counts[f],
+                      "description": descs.get(f, "")}
+                     for f in sorted(personal)]
     try:
         zims = kiwix_catalog()
     except Exception:
         zims = []
-    return {"docs": docs, "zims": zims}
+    return {"docs": docs, "docs_personal": docs_personal, "zims": zims}
 
 
 def manifest_text(manifest):
     lines = ["Local reference documents:"]
     for d in manifest["docs"]:
         lines.append(f"- {d['file']}: {d['description']} ({d['chunks']} chunks)")
+    if manifest.get("docs_personal"):
+        lines.append("Personal documents (yours, in ./personal):")
+        for d in manifest["docs_personal"]:
+            lines.append(f"- {d['file']}: {d['description']} ({d['chunks']} chunks)")
     lines.append("Offline Wikipedia (kiwix, full-text searchable):")
     for z in manifest["zims"]:
         lines.append(f"- {z['title']}: {z['summary']} ({z['articles']} articles)")

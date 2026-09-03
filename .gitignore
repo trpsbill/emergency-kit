@@ -10,6 +10,11 @@ index.npz
 docs/*
 !docs/SOURCES.md
 
+# personal documents are private drop-ins (see personal/README.md); only the
+# README is tracked so the folder exists in a fresh clone
+personal/*
+!personal/README.md
+
 # machine-specific config
 .env
 
